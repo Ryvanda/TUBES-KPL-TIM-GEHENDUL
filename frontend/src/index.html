@@ -6,9 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>telFood - Smart Canteen</title>
   <link href="./output.css" rel="stylesheet" />
+  <style>
+    .sidebar-nav a.active-menu {
+      color: #C1500E !important;
+      font-weight: 600;
+    }
+  </style>
 </head>
 
-<body class="bg-[#F0E8D5] dark:bg-gray-900 transition-colors">
+<body class="bg-[#F0E8D5] transition-colors">
   <div id="sidebar-placeholder"></div>
 
   <main id="main-content" class="ml-72 p-8 min-h-screen">
@@ -28,174 +34,166 @@
   <script src="./js/siswa/booking.js"></script>
 
   <script>
-    // 1. Fungsi Load Sidebar
+
+    const CURRENT_ROLE = 'siswa';
     async function initApp() {
       try {
-        // Load Sidebar dari folder partials
         const resSidebar = await fetch("./partials/sidebar.html");
         const sidebarHtml = await resSidebar.text();
-        document.getElementById("sidebar-placeholder").innerHTML =
-          sidebarHtml;
+        document.getElementById("sidebar-placeholder").innerHTML = sidebarHtml;
 
-        // Inisialisasi Navigasi setelah sidebar muncul
-        setupNavigation();
+        const avatar = document.getElementById("sidebar-avatar");
+        if (avatar) avatar.src = "./assets/profile.png";
 
-        // Load halaman pertama kali (Home)
-        loadPage("home");
+        const navContainer = document.querySelector(".sidebar-nav");
+
+        if (CURRENT_ROLE === 'siswa') {
+          navContainer.innerHTML = `
+            <a data-page="siswa-home" href="#" class="block text-gray-400 hover:text-[#D2691E] p-2.5 rounded-xl transition-all">Home</a>
+            <a data-page="siswa-booking" href="#" class="block text-gray-400 hover:text-[#D2691E] p-2.5 rounded-xl transition-all">Pesan</a>
+          `;
+          setupNavigation();
+          loadPage("siswa-home"); 
+
+        } else if (CURRENT_ROLE === 'owner') {
+          navContainer.innerHTML = `
+            <a data-page="owner-dashboard" href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-sm text-gray-400 hover:text-[#C1500E] transition-all">
+                <i class="ti ti-layout-dashboard text-lg"></i> Dashboard
+            </a>
+            <a data-page="owner-menu" href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-sm text-gray-400 hover:text-[#C1500E] transition-all">
+                <i class="ti ti-tools-kitchen-2 text-lg"></i> Edit Menu
+            </a>
+            <a data-page="owner-status" href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-sm text-gray-400 hover:text-[#C1500E] transition-all">
+                <i class="ti ti-receipt text-lg"></i> Status Pesanan
+            </a>
+          `;
+          setupNavigation();
+          loadPage("owner-dashboard"); 
+        }
+
       } catch (err) {
-        console.error("Gagal inisialisasi:", err);
+        console.error("Gagal inisialisasi aplikasi:", err);
       }
     }
 
-    // 2. Fungsi Load Halaman Dinamis
     async function loadPage(pageName) {
       const contentArea = document.getElementById('main-content');
-
       let filePath = '';
-      if (pageName === 'home') filePath = './pages/siswa/dashSiswa.html';
-      else if (pageName === 'booking') filePath = './pages/siswa/booking.html';
-      else if (pageName === 'account') filePath = './pages/account/index.html';
+
+      if (pageName === 'siswa-home') filePath = './pages/siswa/dashSiswa.html';
+      else if (pageName === 'siswa-booking') filePath = './pages/siswa/booking.html';
+      else if (pageName === 'owner-dashboard') filePath = './pages/owner/dashboard.html';
+      else if (pageName === 'owner-menu') filePath = './pages/owner/edit-menu.html';
+      else if (pageName === 'owner-status') filePath = './pages/owner/update_status.html';
+      else if (pageName === 'page-account') filePath = './pages/account/index.html';
 
       try {
         const response = await fetch(filePath);
-        if (!response.ok) throw new Error('Page not found');
-        const html = await response.text();
+        if (!response.ok) throw new Error('Halaman tidak ditemukan');
+        const htmlText = await response.text();
 
-        contentArea.innerHTML = html; // inject sekali
-
+        contentArea.innerHTML = '';
         updateSidebarActive(pageName);
 
-        // Tunggu DOM selesai render baru panggil fungsi JS
-        if (pageName === 'home') {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+
+        const bodyNodes = Array.from(doc.body.childNodes);
+        bodyNodes.forEach(node => {
+          if (node.tagName === 'SCRIPT') {
+            // Buat ulang elemen script secara manual agar browser mau mengeksekusinya
+            const scriptEl = document.createElement('script');
+            scriptEl.textContent = node.textContent;
+            document.body.appendChild(scriptEl).parentNode.removeChild(scriptEl);
+          } else {
+            contentArea.appendChild(node);
+          }
+        });
+
+        if (pageName === 'siswa-home') {
           dashSiswa.renderTopMenu();
         }
-        if (pageName === 'booking') {
+        if (pageName === 'siswa-booking') {
           booking.renderKantinSelect();
           booking.renderMenuGrid('');
           booking.renderOrderItems();
-
-          const pesanBtn = document.getElementById('pesanBtn');
-
-          if (pesanBtn) {
-
-            // biar ga double event tiap reload page
-            pesanBtn.replaceWith(pesanBtn.cloneNode(true));
-
-            const newPesanBtn = document.getElementById('pesanBtn');
-
-            newPesanBtn.addEventListener('click', () => {
-
-              const nama = document.getElementById('namaInput')?.value?.trim();
-              const kantin = document.getElementById('kantinSelect')?.value;
-
-              // VALIDASI
-              const valid = Utils.validateNama(nama);
-
-              if (!valid.valid) {
-                alert(valid.message);
-                return;
-              }
-
-              if (!kantin) {
-                alert('Pilih kantin dulu anjir');
-                return;
-              }
-
-              if (Cart.isEmpty()) {
-                alert('Pilih menu terlebih dahulu!');
-                return;
-              }
-
-              // STATE MACHINE
-              OrderStateMachine.reset();
-              OrderStateMachine.transition(
-                OrderStateMachine.STATES.ORDERED
-              );
-
-              // ORDER DATA
-              const orderId = Utils.generateOrderId();
-
-              const items = Cart.getItems();
-
-              const summary =
-                items[0].menuItem.name +
-                (items.length > 1
-                  ? ` + ${items.length - 1} lainnya`
-                  : '');
-
-              // RENDER POPUP
-              const total = Cart.getTotal();
-
-              UI.renderOrderStatus(
-                orderId,
-                summary,
-                total
-              );
-
-              // SIMULASI STATUS
-              setTimeout(() => {
-                OrderStateMachine.transition(
-                  OrderStateMachine.STATES.COOKING
-                );
-
-                UI.renderOrderStatus(orderId, summary, total);
-              }, 3000);
-
-              setTimeout(() => {
-                OrderStateMachine.transition(
-                  OrderStateMachine.STATES.READY
-                );
-
-                UI.renderOrderStatus(orderId, summary, total);
-              }, 6000);
-
-              setTimeout(() => {
-                OrderStateMachine.transition(
-                  OrderStateMachine.STATES.DONE
-                );
-
-                UI.renderOrderStatus(orderId, summary, total);
-              }, 9000);
-
-              // RESET CART
-              Cart.clearCart();
-              booking.renderOrderItems();
-            });
-          }
+          initBookingEvents(); // Pindahkan setup klik pesan siswa ke fungsi terpisah agar rapi
+        }
+        if (pageName === 'page-account') {
+          initAccountPage();
         }
 
-        if (pageName === 'account') {
-          initAccountPage();
+        if (pageName === 'owner-dashboard') {
+          console.log("Owner Dashboard Stats Loaded");
+        }
+        if (pageName === 'owner-menu' && typeof renderMenu === 'function') {
+          renderMenu();
+        }
+        if (pageName === 'owner-status' && typeof initKanban === 'function') {
+          initKanban();
         }
 
       } catch (err) {
         console.error('Gagal load halaman:', err);
-        contentArea.innerHTML = `<h2 class="text-red-500">Halaman tidak ditemukan: ${pageName}</h2>`;
+        contentArea.innerHTML = `<h2 class="text-red-500 font-bold p-5">Halaman tidak ditemukan: ${pageName}</h2>`;
       }
     }
 
-    // 3. Setup klik menu di sidebar
     function setupNavigation() {
       document.body.addEventListener("click", (e) => {
         const link = e.target.closest("a[data-page]");
         if (link) {
           e.preventDefault();
-          const page = link.getAttribute("data-page").replace("page-", "");
+          const page = link.getAttribute("data-page");
           loadPage(page);
         }
       });
     }
 
-    // 4. Update UI Menu Aktif
     function updateSidebarActive(pageName) {
       document.querySelectorAll(".sidebar-nav a").forEach((nav) => {
-        if (nav.getAttribute("data-page") === `page-${pageName}`) {
-          nav.classList.add("text-[#D2691E]", "font-bold");
+        if (nav.getAttribute("data-page") === pageName) {
+          nav.classList.add("active-menu", "text-[#D2691E]");
           nav.classList.remove("text-gray-400");
         } else {
-          nav.classList.remove("text-[#D2691E]", "font-bold");
+          nav.classList.remove("active-menu", "text-[#D2691E]");
           nav.classList.add("text-gray-400");
         }
+      });
+    }
+
+    function initBookingEvents() {
+      const pesanBtn = document.getElementById('pesanBtn');
+      if (!pesanBtn) return;
+
+      pesanBtn.replaceWith(pesanBtn.cloneNode(true));
+      const newPesanBtn = document.getElementById('pesanBtn');
+
+      newPesanBtn.addEventListener('click', () => {
+        const nama = document.getElementById('namaInput')?.value?.trim();
+        const kantin = document.getElementById('kantinSelect')?.value;
+
+        const valid = Utils.validateNama(nama);
+        if (!valid.valid) { alert(valid.message); return; }
+        if (!kantin) { alert('Pilih kantin dulu anjir'); return; }
+        if (Cart.isEmpty()) { alert('Pilih menu terlebih dahulu!'); return; }
+
+        OrderStateMachine.reset();
+        OrderStateMachine.transition(OrderStateMachine.STATES.ORDERED);
+
+        const orderId = Utils.generateOrderId();
+        const items = Cart.getItems();
+        const summary = items[0].menuItem.name + (items.length > 1 ? ` + ${items.length - 1} lainnya` : '');
+        const total = Cart.getTotal();
+
+        UI.renderOrderStatus(orderId, summary, total);
+
+        setTimeout(() => { OrderStateMachine.transition(OrderStateMachine.STATES.COOKING); UI.renderOrderStatus(orderId, summary, total); }, 3000);
+        setTimeout(() => { OrderStateMachine.transition(OrderStateMachine.STATES.READY); UI.renderOrderStatus(orderId, summary, total); }, 6000);
+        setTimeout(() => { OrderStateMachine.transition(OrderStateMachine.STATES.DONE); UI.renderOrderStatus(orderId, summary, total); }, 9000);
+
+        Cart.clearCart();
+        booking.renderOrderItems();
       });
     }
 
@@ -256,7 +254,6 @@
         )
         .join("");
 
-      // Search filter
       const searchInput = document.getElementById("search");
       if (searchInput) {
         searchInput.addEventListener("input", (e) => {
@@ -290,7 +287,6 @@
       }
     }
 
-    // Jalankan aplikasi
     window.onload = initApp;
   </script>
 </body>
