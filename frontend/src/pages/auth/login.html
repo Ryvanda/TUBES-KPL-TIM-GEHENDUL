@@ -108,6 +108,10 @@
 
     <script src="../../js/api.js"></script>
     <script>
+      if (ApiClient.isAuthenticated()) {
+        window.location.href = '../../index.html';
+      }
+
       const loginForm = document.getElementById("loginForm");
       const loginMessage = document.createElement("p");
       loginMessage.className = "text-sm mt-3 text-center font-medium";

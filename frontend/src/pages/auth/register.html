@@ -147,6 +147,10 @@
 
     <script src="../../js/api.js"></script>
     <script>
+      if (ApiClient.isAuthenticated()) {
+        window.location.href = '../../index.html';
+      }
+
       const registerForm = document.getElementById("registerForm");
       const registerMessage = document.createElement("p");
       registerMessage.className = "text-sm mt-3 text-center font-medium";

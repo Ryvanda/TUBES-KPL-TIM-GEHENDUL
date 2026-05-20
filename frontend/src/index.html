@@ -67,6 +67,10 @@
 
   <script>
 
+    if (!ApiClient.isAuthenticated()) {
+      window.location.href = './pages/auth/login.html';
+    }
+
     const CURRENT_USER = ApiClient.getUser();
     const CURRENT_ROLE = ApiClient.normalizeRole(CURRENT_USER?.role);
     async function initApp() {
