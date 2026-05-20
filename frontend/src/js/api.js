@@ -22,7 +22,7 @@ const ApiClient = (() => {
   }
 
   function normalizeRole(role) {
-    if (role === 'admin' || role === 'owner') return 'owner';
+    if (role === 'admin' || role === 'owner' || role === 'penjual') return 'owner';
     return 'siswa';
   }
 
@@ -37,8 +37,33 @@ const ApiClient = (() => {
     localStorage.removeItem(USER_KEY);
   }
 
+  function logout() {
+    clearSession();
+    // Redirect to login based on current path depth
+    const inPages = window.location.pathname.includes('/pages/');
+    window.location.href = inPages ? '../auth/login.html' : './pages/auth/login.html';
+  }
+
+  function isTokenExpired(token) {
+    if (!token) return true;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const now = Math.floor(Date.now() / 1000);
+      return payload.exp && payload.exp < now;
+    } catch (e) {
+      return true;
+    }
+  }
+
   function isAuthenticated() {
-    return Boolean(getToken());
+    const token = getToken();
+    if (!token) return false;
+
+    if (isTokenExpired(token)) {
+      clearSession();
+      return false;
+    }
+    return true;
   }
 
   async function request(path, options = {}) {
@@ -59,8 +84,14 @@ const ApiClient = (() => {
     }
 
     const token = getToken();
-    if (auth && token) {
-      requestHeaders.Authorization = `Bearer ${token}`;
+    if (auth) {
+      if (token && isTokenExpired(token)) {
+        logout();
+        throw new Error('Sesi telah berakhir, silakan login kembali');
+      }
+      if (token) {
+        requestHeaders.Authorization = `Bearer ${token}`;
+      }
     }
 
     const response = await fetch(`${getBaseUrl()}${path}`, {
@@ -155,6 +186,7 @@ const ApiClient = (() => {
     listAllOrders,
     listMyOrders,
     login,
+    logout,
     normalizeRole,
     register,
     saveSession,
