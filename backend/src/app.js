@@ -3,6 +3,8 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const http = require('http');
+const { Server: SocketIO } = require('socket.io');
 
 const config = require('./config/env');
 const apiRoutes = require('./routes');
@@ -26,4 +28,24 @@ app.use('/api', apiRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-module.exports = app;
+// ─── HTTP server + Socket.io ──────────────────────────────────────────────────
+const httpServer = http.createServer(app);
+
+const io = new SocketIO(httpServer, {
+  cors: {
+    origin: config.corsOrigin === '*' ? '*' : config.corsOrigin.split(','),
+    methods: ['GET', 'POST'],
+  },
+});
+
+io.on('connection', (socket) => {
+  console.log(`[socket.io] client connected: ${socket.id}`);
+  socket.on('disconnect', () => {
+    console.log(`[socket.io] client disconnected: ${socket.id}`);
+  });
+});
+
+// Make io accessible to controllers via app.locals
+app.locals.io = io;
+
+module.exports = { app, httpServer, io };

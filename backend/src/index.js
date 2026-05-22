@@ -1,6 +1,6 @@
 'use strict';
 
-const app = require('./app');
+const { app, httpServer } = require('./app');
 const config = require('./config/env');
 const { ping } = require('./config/db');
 
@@ -14,8 +14,9 @@ async function start() {
     console.warn('[db] Server tetap berjalan; permintaan yang butuh DB akan mengembalikan error.');
   }
 
-  const server = app.listen(config.port, () => {
+  const server = httpServer.listen(config.port, () => {
     console.log(`[server] Smart Canteen API listening on port ${config.port} (env=${config.env})`);
+    console.log(`[socket.io] WebSocket server siap`);
   });
 
   function shutdown(signal) {

@@ -7,6 +7,7 @@ const ApiError = require('../utils/ApiError');
 const { validateRegister, validateLogin } = require('../validators');
 
 async function register(req, res) {
+  // validateRegister maps full_name → name, and forces role: 'user'
   const { name, email, password, role } = validateRegister(req.body);
 
   const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);

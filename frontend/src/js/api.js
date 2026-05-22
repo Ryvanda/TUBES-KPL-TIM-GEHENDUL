@@ -21,8 +21,17 @@ const ApiClient = (() => {
     }
   }
 
+  /**
+   * normalizeRole – maps raw DB role → frontend role group.
+   * DB roles:   'user'     → 'siswa'  (pelanggan)
+   *             'penjual'  → 'owner'  (admin kantin)
+   *             'admin'    → 'owner'
+   *             'owner'    → 'owner'
+   *             'pelanggan'→ 'siswa'  (legacy)
+   */
   function normalizeRole(role) {
     if (role === 'admin' || role === 'owner' || role === 'penjual') return 'owner';
+    // 'user', 'pelanggan', or any other → siswa
     return 'siswa';
   }
 
@@ -125,11 +134,15 @@ const ApiClient = (() => {
     return data;
   }
 
-  async function register(name, email, password) {
+  /**
+   * register – sends full_name (not name) to match backend Joi validator.
+   * Role is always forced to 'user' by backend; no need to send it.
+   */
+  async function register(full_name, email, password) {
     const data = await request('/auth/register', {
       method: 'POST',
       auth: false,
-      body: { name, email, password },
+      body: { full_name, email, password },
     });
     saveSession(data);
     return data;
