@@ -52,3 +52,7 @@ Smart Canteen adalah aplikasi web yang memungkinkan pelanggan memesan makanan da
 | 2 | Fatikhah Sukma Arti | 103122400019 |
 | 3 | Ryvanda | 103122400027 |
 | 4 | Najwa Areefa Ghaisani | 103122400028 |
+
+
+## 📑 Pembagain Jobdesk
+
