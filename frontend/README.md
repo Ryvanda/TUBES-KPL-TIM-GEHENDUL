@@ -32,55 +32,55 @@ frontend/
 ├── package-lock.json
 │
 ├── src/
-│   ├── index.html              # Entry point utama — shell SPA (sidebar + content area)
-│   ├── input.css               # Source Tailwind CSS
-│   ├── output.css              # Tailwind CSS hasil build (auto-generated)
+│   ├── index.html              
+│   ├── input.css               
+│   ├── output.css              
 │   │
-│   ├── assets/                 # Static assets
+│   ├── assets/                 
 │   │   ├── profile.png
 │   │   ├── auth-bg.png
 │   │   ├── avatars/
 │   │   │   └── profile.png
-│   │   └── images/             # Gambar menu makanan
+│   │   └── images/             
 │   │       ├── nasi_goreng.png
 │   │       ├── ayam_goreng.png
 │   │       ├── es_teh_manis.png
 │   │       └── jus_jeruk.png
 │   │
-│   ├── partials/               # Komponen HTML yang di-inject secara dinamis
-│   │   └── sidebar.html        # Sidebar navigasi (dimuat satu kali saat app init)
+│   ├── partials/               
+│   │   └── sidebar.html        
 │   │
-│   ├── pages/                  # Halaman-halaman partial (di-inject ke #main-content)
+│   ├── pages/                  
 │   │   ├── auth/
-│   │   │   ├── login.html      # Halaman login
-│   │   │   └── register.html   # Halaman registrasi
+│   │   │   ├── login.html      
+│   │   │   └── register.html   
 │   │   ├── siswa/
-│   │   │   ├── dashSiswa.html  # Dashboard siswa — top menu & akses cepat pesan
-│   │   │   └── booking.html    # Halaman form pemesanan + grid menu kantin
+│   │   │   ├── dashSiswa.html  
+│   │   │   └── booking.html    
 │   │   ├── owner/
-│   │   │   ├── dashboard.html  # Dashboard penjual — statistik transaksi
-│   │   │   ├── edit-menu.html  # Manajemen menu (tambah/edit/hapus)
-│   │   │   └── update_status.html  # Kanban board status pesanan
+│   │   │   ├── dashboard.html 
+│   │   │   ├── edit-menu.html  
+│   │   │   └── update_status.html  
 │   │   └── account/
-│   │       └── index.html      # Halaman profil & riwayat pesanan
+│   │       └── index.html     
 │   │
 │   └── js/
-│       ├── api.js              # ApiClient — wrapper semua request ke backend REST API
+│       ├── api.js              
 │       │
-│       ├── siswa/              # Modul JS khusus alur siswa/pelanggan
-│       │   ├── utils.js        # Helper umum (formatRupiah, sanitize, generateOrderId, validasi)
-│       │   ├── menuTable.js    # Cache data menu & kantin dari API
-│       │   ├── cart.js         # State keranjang belanja (tambah, kurangi, clear)
-│       │   ├── orderStateMachine.js  # State machine pesanan (IDLE→ORDERED→COOKING→READY→DONE)
-│       │   ├── booking.js      # Logic halaman booking (render select kantin, grid menu, item order)
-│       │   ├── dashSiswa.js    # Logic dashboard siswa (render top menu)
-│       │   └── ui.js           # Komponen UI shared (renderOrderStatus, toggle overlay, estimasi waktu)
+│       ├── siswa/              
+│       │   ├── utils.js        
+│       │   ├── menuTable.js    
+│       │   ├── cart.js         
+│       │   ├── orderStateMachine.js  
+│       │   ├── booking.js      
+│       │   ├── dashSiswa.js    
+│       │   └── ui.js          
 │       │
 │       └── owner/
-│           └── edit-menu.js    # Logic manajemen menu penjual (CRUD, upload gambar)
+│           └── edit-menu.js    
 │
 └── test/
-    └── syntax.test.js          # Syntax check dasar untuk file JS
+    └── syntax.test.js          
 ```
 
 ---
@@ -95,7 +95,7 @@ Aplikasi ini adalah **Single Page Application (SPA) sederhana** tanpa framework.
 4. Script inisialisasi dipanggil untuk halaman tersebut
 
 ```
-index.html  ──loadPage()──►  fetch partial HTML
+index.html  loadPage()──►  fetch partial HTML
                 │
                 ▼
          #main-content (di-replace setiap ganti halaman)
@@ -114,7 +114,7 @@ dashSiswa.html        edit-menu.html
 
 ## 🔌 Modul JavaScript
 
-### `api.js` — ApiClient
+### `api.js` ApiClient
 Wrapper untuk semua komunikasi dengan backend. Mengelola token JWT di `localStorage`.
 
 ```js
@@ -129,7 +129,7 @@ ApiClient.updateOrderStatus(id, status)
 
 ---
 
-### `siswa/utils.js` — Utils
+### `siswa/utils.js` Utils
 Helper fungsi umum yang dipakai di seluruh modul.
 
 | Fungsi | Kegunaan |
@@ -141,35 +141,35 @@ Helper fungsi umum yang dipakai di seluruh modul.
 
 ---
 
-### `siswa/menuTable.js` — MenuTable
+### `siswa/menuTable.js` MenuTable
 Cache in-memory untuk data menu dan kantin dari API.
 
 ```js
-MenuTable.loadFromApi()             // Fetch & simpan data dari backend
-MenuTable.getKantinList()           // Ambil daftar kantin
-MenuTable.getMenuByKantin(kantinId) // Ambil menu berdasarkan kantin
-MenuTable.findMenuItemById(id)      // Cari satu item menu
-MenuTable.getTopMenu()              // Ambil 3 menu teratas
-MenuTable.isApiBacked()             // Cek apakah data berasal dari API
+MenuTable.loadFromApi()             
+MenuTable.getKantinList()           
+MenuTable.getMenuByKantin(kantinId) 
+MenuTable.findMenuItemById(id)      
+MenuTable.getTopMenu()              
+MenuTable.isApiBacked()             
 ```
 
 ---
 
-### `siswa/cart.js` — Cart
+### `siswa/cart.js` Cart
 Manajemen state keranjang belanja (in-memory, reset saat halaman reload).
 
 ```js
-Cart.addItem(menuItem)    // Tambah item (quantity +1 jika sudah ada)
-Cart.removeItem(id)       // Kurangi quantity (hapus jika quantity = 0)
-Cart.getItems()           // Ambil semua item di keranjang
-Cart.getTotal()           // Hitung total harga
-Cart.isEmpty()            // Cek apakah keranjang kosong
-Cart.clearCart()          // Kosongkan keranjang
+Cart.addItem(menuItem)    
+Cart.removeItem(id)       
+Cart.getItems()           
+Cart.getTotal()           
+Cart.isEmpty()            
+Cart.clearCart()          
 ```
 
 ---
 
-### `siswa/orderStateMachine.js` — OrderStateMachine
+### `siswa/orderStateMachine.js` OrderStateMachine
 State machine untuk tracking status pesanan aktif.
 
 ```
@@ -177,36 +177,36 @@ IDLE → ORDERED → COOKING → READY → DONE
 ```
 
 ```js
-OrderStateMachine.transition(state)   // Pindah state (harus sesuai alur)
-OrderStateMachine.forceState(state)   // Paksa set state (untuk update dari socket.io)
-OrderStateMachine.getState()          // Ambil state saat ini
-OrderStateMachine.getStepStatus(step) // "done" | "active" | "inactive"
-OrderStateMachine.reset()             // Reset ke IDLE
+OrderStateMachine.transition(state)   
+OrderStateMachine.forceState(state)   
+OrderStateMachine.getState()          
+OrderStateMachine.getStepStatus(step) 
+OrderStateMachine.reset()             
 ```
 
 ---
 
-### `siswa/ui.js` — UI
+### `siswa/ui.js` UI
 Komponen UI shared untuk halaman siswa.
 
 ```js
-UI.renderOrderStatus(orderId, summary, total)  // Tampilkan popup status pesanan
-UI.hideOrderStatus()                           // Sembunyikan popup status pesanan
-UI.toggleOrderStatus()                         // Toggle show/hide popup (tombol jam 🕐)
-UI.updateEstimasiWaktu()                       // Update estimasi waktu dari pesanan COOKING
-UI.renderOrderItems()                          // Render daftar item di form booking
-UI.renderMenuGrid(kantinId)                    // Render grid menu berdasarkan kantin
+UI.renderOrderStatus(orderId, summary, total)  
+UI.hideOrderStatus()                           
+UI.toggleOrderStatus()                         
+UI.updateEstimasiWaktu()                       
+UI.renderOrderItems()                          
+UI.renderMenuGrid(kantinId)                    
 ```
 
 ---
 
-### `siswa/booking.js` — booking
+### `siswa/booking.js` booking
 Logic spesifik halaman pemesanan.
 
 ```js
-booking.renderKantinSelect()        // Populate dropdown pilih kantin
-booking.renderMenuGrid(kantinId)    // Render menu + tombol +/- quantity
-booking.renderOrderItems()          // Render ringkasan item yang dipilih
+booking.renderKantinSelect()        
+booking.renderMenuGrid(kantinId)    
+booking.renderOrderItems()          
 ```
 
 ---
@@ -235,7 +235,7 @@ Menggunakan **Tailwind CSS v4** dengan konfigurasi custom:
 
 Build CSS:
 ```bash
-npm run dev   # Watch mode (development)
+npm run dev   
 ```
 
 Output di `src/output.css` **jangan diedit manual**, file ini auto-generated.
